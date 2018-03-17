@@ -28,8 +28,14 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
+  ///* predicted state mean
+  VectorXd x_pred_;
+
+  ///* predicted covariance matrix
+  MatrixXd P_pred_;
+
   ///* predicted sigma points matrix
-  MatrixXd Xsig_pred_;
+  MatrixXd Xsig_, Xsig_pred_;
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -90,6 +96,31 @@ public:
    * @param delta_t Time between k and k+1 in s
    */
   void Prediction(double delta_t);
+
+  /*
+   * Computes the augmented sigma points.
+   * */
+  void AugmentedSigmaPoints();
+
+  /*
+   * Predicts Sigma Points
+   * */
+  void SigmaPointPrediction(const double & delta_t);
+
+  /*
+   * Predicts Mean and Covariances
+   * */
+  void PredictMeanAndCovariance(VectorXd* x_pred, MatrixXd* P_pred);
+
+  /*
+   * Predicts Radar Measurement
+   */
+  void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zsig_out);
+
+  /*
+   * Updates the State
+   * */
+  void UpdateStateRadar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig, VectorXd* x_out, MatrixXd* P_out);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
