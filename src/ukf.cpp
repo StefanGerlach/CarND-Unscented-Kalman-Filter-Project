@@ -17,7 +17,7 @@ UKF::UKF() {
   use_laser_ = false;
 
   // if this is false, radar measurements will be ignored (except during init)
-  use_radar_ = false;
+  use_radar_ = true;
 
   // initial state vector
   x_ = VectorXd(5);
@@ -27,10 +27,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.2; //30;
+  std_a_ = 0.4; //30;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.2; // 30;
+  std_yawdd_ = 0.5; // 30;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -87,45 +87,68 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   Complete this function! Make sure you switch between lidar and radar
   measurements.
   */
-  Tools tools;
 
   if(!is_initialized_)
   {
+    Tools tools;
+
     // Set the timestamp as initial timestamp
     this->time_us_ = meas_package.timestamp_;
 
     // Intialize the state with first measurement
-    if(meas_package.sensor_type_ == MeasurementPackage::RADAR)
-      this->x_ = tools.ConvertPolarToCartesian(meas_package.raw_measurements_);
-    else
-      this->x_ = meas_package.raw_measurements_;
+    float px = 0, py = 0, v = 0;
+    if (MeasurementPackage::RADAR == meas_package.sensor_type_)
+    {
+      float r = meas_package.raw_measurements_[0];
+      float phi = meas_package.raw_measurements_[1];
+      float r_dot = meas_package.raw_measurements_[2];
+
+      px = r * cos(phi);
+      py = r * sin(phi);
+      v = r_dot;
+
+    } else if (MeasurementPackage::LASER == meas_package.sensor_type_) {
+      px = meas_package.raw_measurements_[0];
+      py = meas_package.raw_measurements_[1];
+    }
+
+    x_ << px , py , v, 0, 0;
+    P_ <<   1, 0, 0, 0, 0,
+        0, 1, 0, 0, 0,
+        0, 0, 100, 0, 0,
+        0, 0, 0, 100, 0,
+        0, 0, 0, 0, 1;
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
   }
 
+  // Compute delta time
+  double delta_t = (meas_package.timestamp_ - this->time_us_) / 1000000.0;
 
+  // Check if this is radar sensor data
   if(meas_package.sensor_type_ == MeasurementPackage::RADAR && this->use_radar_)
   {
-    float delta_t = 0.0;
+    // Do the Prediction Step
+    this->Prediction(delta_t);
 
-    if (this->time_us_ >= 0)
-    {
-      delta_t = (meas_package.timestamp_ - this->time_us_) / 1000000.0;
+    // Do the Update Step
+    this->UpdateRadar(meas_package);
 
-    }
-
-
-
+    // This was the last measurement, so remember this as the last timestamp
+    this->time_us_ = meas_package.timestamp_;
   }
 
+  // Check if this is laser sensor data
   if(meas_package.sensor_type_ == MeasurementPackage::LASER && this->use_laser_)
   {
-    int x = 1;
+    // Do the Prediction Step
+    // this->Prediction(delta_t);
 
+    // This was the last measurement, so remember this as the last timestamp
+    // this->time_us_ = meas_package.timestamp_;
   }
-
 }
 
 /**
@@ -135,11 +158,17 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
  */
 void UKF::Prediction(double delta_t) {
   /**
-  TODO:
-
   Complete this function! Estimate the object's location. Modify the state
   vector, x_. Predict sigma points, the state, and the state covariance matrix.
   */
+  // Compute the Augmented Sigma Points
+  this->AugmentedSigmaPoints();
+
+  // Prediction of Sigma Points
+  this->SigmaPointPrediction(delta_t);
+
+  // Prediction of Mean and Covariance
+  this->PredictMeanAndCovariance(&this->x_, &this->P_);
 }
 
 void UKF::AugmentedSigmaPoints() {
@@ -350,15 +379,15 @@ void UKF::PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zs
 }
 
 
-void UKF::UpdateStateRadar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig, VectorXd* x_out, MatrixXd* P_out)  {
+void UKF::UpdateStateRadar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig, VectorXd* x_out, MatrixXd* P_out, MatrixXd* NIS_R_out)  {
 
   int n_z = 3;
 
   // copy of the predicted state mean
-  VectorXd x = this->x_pred_;
+  VectorXd x = this->x_;
 
   // copy of the predicted covariance matrix
-  MatrixXd P = this->P_pred_;
+  MatrixXd P = this->P_;
 
   //create matrix for cross correlation Tc
   MatrixXd Tc = MatrixXd(this->n_x_, n_z);
@@ -396,8 +425,12 @@ void UKF::UpdateStateRadar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd&
   x = x + K * z_diff;
   P = P - K * S * K.transpose();
 
+  std::cout << x << std::endl;
+  std::cout << P << std::endl;
+
   *x_out = x;
   *P_out = P;
+  *NIS_R_out = z_diff.transpose() * S.inverse() * z_diff;
 }
 
 /**
@@ -421,11 +454,16 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
  */
 void UKF::UpdateRadar(MeasurementPackage meas_package) {
   /**
-  TODO:
 
   Complete this function! Use radar data to update the belief about the object's
   position. Modify the state vector, x_, and covariance, P_.
 
   You'll also need to calculate the radar NIS.
   */
+  VectorXd z_pred;
+  MatrixXd S, Zsig;
+  MatrixXd NIS;
+
+  this->PredictRadarMeasurement(&z_pred, &S, &Zsig);
+  this->UpdateStateRadar(meas_package.raw_measurements_, z_pred, S, Zsig, &this->x_, &this->P_, &NIS);
 }

@@ -12,37 +12,37 @@ Tools::~Tools() {}
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
   /**
-      * Calculate the RMSE here.
-    */
-    if (estimations.size() != ground_truth.size() || estimations.size() <= 0) {
-      std::cout << "Error computing the Root Mean Squared Error." << std::endl;
-    }
+  * Calculate the RMSE here.
+  */
+  if (estimations.size() != ground_truth.size() || estimations.size() <= 0) {
+    std::cout << "Error computing the Root Mean Squared Error." << std::endl;
+  }
 
-    // probe the dimensions. we can access at postion 0 since we checked the length
-    // in the statement above
-    unsigned int dimensions = estimations[0].rows();
-    double tmp_difference = 0.0;
+  // probe the dimensions. we can access at postion 0 since we checked the length
+  // in the statement above
+  unsigned int dimensions = estimations[0].rows();
+  double tmp_difference = 0.0;
 
-    VectorXd rmse(dimensions);
-    rmse.setConstant(0.0);
+  VectorXd rmse(dimensions);
+  rmse.setConstant(0.0);
 
-    // iterate all elements
-    for(unsigned int i = 0; i < estimations.size(); i++) {
+  // iterate all elements
+  for(unsigned int i = 0; i < estimations.size(); i++) {
 
-      // iterate all dimensions
-      for(unsigned int d = 0; d < dimensions; d++) {
-        tmp_difference = (estimations[i](d) - ground_truth[i](d));
-        rmse(d) +=  tmp_difference * tmp_difference;
-      }
-    }
-
-    // compute mean and square root
+    // iterate all dimensions
     for(unsigned int d = 0; d < dimensions; d++) {
-      rmse(d) /= static_cast<double>(estimations.size());
-      rmse(d) = std::sqrt(static_cast<double>(rmse(d)));
+      tmp_difference = (estimations[i](d) - ground_truth[i](d));
+      rmse(d) +=  tmp_difference * tmp_difference;
     }
+  }
 
-    return rmse;
+  // compute mean and square root
+  for(unsigned int d = 0; d < dimensions; d++) {
+    rmse(d) /= static_cast<double>(estimations.size());
+    rmse(d) = std::sqrt(static_cast<double>(rmse(d)));
+  }
+
+  return rmse;
 }
 
 

@@ -28,12 +28,6 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
-  ///* predicted state mean
-  VectorXd x_pred_;
-
-  ///* predicted covariance matrix
-  MatrixXd P_pred_;
-
   ///* predicted sigma points matrix
   MatrixXd Xsig_, Xsig_pred_;
 
@@ -120,7 +114,7 @@ public:
   /*
    * Updates the State
    * */
-  void UpdateStateRadar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig, VectorXd* x_out, MatrixXd* P_out);
+  void UpdateStateRadar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig, VectorXd* x_out, MatrixXd* P_out, MatrixXd* NIS_R_out);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
