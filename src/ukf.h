@@ -115,9 +115,20 @@ public:
   void PredictRadarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zsig_out);
 
   /*
-   * Updates the State
+   * Updates the State for Radar
    * */
   void UpdateStateRadar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig, VectorXd* x_out, MatrixXd* P_out, MatrixXd* NIS_R_out);
+
+  /*
+   * Predicts Radar Measurement
+   */
+  void PredictLidarMeasurement(VectorXd* z_out, MatrixXd* S_out, MatrixXd* Zsig_out);
+
+  /*
+   * Updates the State for Radar
+   * */
+  void UpdateStateLidar(VectorXd& z, VectorXd& z_pred, MatrixXd& S, MatrixXd& Zsig, VectorXd* x_out, MatrixXd* P_out, MatrixXd* NIS_L_out);
+
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
