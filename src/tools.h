@@ -29,6 +29,10 @@ public:
    */
   VectorXd ConvertPolarToCartesian(const VectorXd &polar_measurement);
 
+  /*
+   * A Helper function to normalize angles
+   * */
+  double NormalizeAngle(const double &angle);
 
 };
 

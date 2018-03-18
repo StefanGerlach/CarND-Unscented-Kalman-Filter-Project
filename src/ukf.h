@@ -1,6 +1,7 @@
 #ifndef UKF_H
 #define UKF_H
 
+#include "tools.h"
 #include "measurement_package.h"
 #include "Eigen/Dense"
 #include <vector>
@@ -12,6 +13,8 @@ using Eigen::VectorXd;
 
 class UKF {
 public:
+
+  Tools tools_;
 
   ///* initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;

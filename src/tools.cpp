@@ -9,6 +9,17 @@ Tools::Tools() {}
 
 Tools::~Tools() {}
 
+
+double Tools::NormalizeAngle(const double &angle) {
+
+  double normalized = angle;
+
+  while (normalized> M_PI) normalized-=2.*M_PI;
+  while (normalized<-M_PI) normalized+=2.*M_PI;
+
+  return normalized;
+}
+
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
   /**
