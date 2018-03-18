@@ -30,10 +30,10 @@ UKF::UKF() {
   P_ = MatrixXd(5, 5);
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.2; //30;
+  std_a_ = 1.4; //30;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.2; // 30;
+  std_yawdd_ = 0.4; // 30;
   
   //DO NOT MODIFY measurement noise values below these are provided by the sensor manufacturer.
   // Laser measurement noise standard deviation position1 in m
@@ -111,12 +111,8 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
     // Set the top first values to our x
     this->x_.head(first_measurement.rows()) = first_measurement;
 
-    // Initialize State covariances
-    P_ <<   1, 0, 0, 0, 0,
-        0, 1, 0, 0, 0,
-        0, 0, 100, 0, 0,
-        0, 0, 0, 100, 0,
-        0, 0, 0, 0, 1;
+    // Initialize State covariances matrix as identity
+    P_ = MatrixXd::Identity(x_.rows(), x_.rows());
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
